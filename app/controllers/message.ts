@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import * as messageService from '../services/message.service';
+import * as messageService from '../services/message';
 import * as channelService from '../services/channel.service';
 import { responseHandler } from '../utils/responseHandler';
 import { producer } from '../kafka/kafka';

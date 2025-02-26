@@ -12,6 +12,6 @@ export const validate = (req: Request, res: Response, next: NextFunction) => {
 
 export * from './auth.validator';
 export * from './user.validator';
-export * from './workspace.validator';
-export * from './channel.validator';
-export * from './message.validator';
+export * from './workspace.validators';
+export * from './channel.validators';
+export * from './message.validatoor';
