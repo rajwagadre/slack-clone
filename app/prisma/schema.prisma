@@ -1,0 +1,112 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  password      String
+  avatar        String?
+  status        String    @default("active") // active, away, offline
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  workspaces    WorkspaceMember[]
+  sentMessages  Message[] @relation("SentMessages")
+  channels      ChannelMember[]
+  directMessages DirectMessage[] @relation("SentDirectMessages")
+  receivedDirectMessages DirectMessage[] @relation("ReceivedDirectMessages")
+}
+
+model Workspace {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  icon        String?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  members     WorkspaceMember[]
+  channels    Channel[]
+}
+
+model WorkspaceMember {
+  id          String    @id @default(uuid())
+  role        String    @default("member") // owner, admin, member
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  @@unique([userId, workspaceId])
+}
+
+model Channel {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  isPrivate   Boolean   @default(false)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  members     ChannelMember[]
+  messages    Message[]
+}
+
+model ChannelMember {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  channel    Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  channelId  String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([userId, channelId])
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  content    String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId   String
+  channel    Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  channelId  String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  reactions  Reaction[]
+}
+
+model DirectMessage {
+  id         String   @id @default(uuid())
+  content    String
+  sender     User     @relation("SentDirectMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId   String
+  receiver   User     @relation("ReceivedDirectMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiverId String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  reactions  Reaction[]
+}
+
+model Reaction {
+  id              String         @id @default(uuid())
+  emoji           String
+  userId          String
+  messageId       String?
+  directMessageId String?
+  message         Message?       @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  directMessage   DirectMessage? @relation(fields: [directMessageId], references: [id], onDelete: Cascade)
+  created_at      DateTime       @default(now())
+  updated_at      DateTime       @updatedAt
+
+  @@unique([userId, messageId, emoji])
+  @@unique([userId, directMessageId, emoji])
+}
